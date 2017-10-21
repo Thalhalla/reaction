@@ -26,3 +26,11 @@ master:
     - docker push "$CI_REGISTRY_IMAGE:latest"
   only:
     - master
+
+thalhalla:
+  stage: deploy
+  script:
+    - docker build --build-arg TOOL_NODE_FLAGS="--max-old-space-size=2048" -t "$CI_REGISTRY_IMAGE:latest" .
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+  only:
+    - thalhalla
