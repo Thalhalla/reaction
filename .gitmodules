@@ -1,0 +1,4 @@
+[submodule "imports/plugins/custom/reaction-generic-theme"]
+	path = imports/plugins/custom/reaction-generic-theme
+	url = git@github.com:Thalhalla/reaction-generic-theme.git
+	branch = thalhalla
