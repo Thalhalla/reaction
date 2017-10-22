@@ -18,12 +18,12 @@ fi
 
 # Thalhalla branch deployment (only runs when a version git tag exists - syntax: "v1.2.3")
 if [[ "$CIRCLE_BRANCH" == "thalhalla" ]]; then
-  VERSION=$(git describe --tags | grep "^v[0-9]\+\.[0-9]\+\.[0-9]\+-thalhalla$")
+  VERSION=$(git describe --tags | grep "^v[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+-thalhalla$")
 
   if [[ "$VERSION" ]]; then
     set -e
 
-    DOCKER_NAMESPACE=${DOCKER_NAMESPACE:-"reactioncommerce/reaction"}
+    DOCKER_NAMESPACE=${DOCKER_NAMESPACE:-"thalhalla/custom"}
 
     docker tag $DOCKER_NAMESPACE:latest $DOCKER_NAMESPACE:$VERSION
 
