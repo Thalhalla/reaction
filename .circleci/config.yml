@@ -49,7 +49,7 @@ jobs:
             - /home/reaction/.meteor/local
 
       - run:
-          command: .reaction/build-thalhalla.sh
+          command: .thalhalla/build-thalhalla.sh
           no_output_timeout: 30m
 
       - run:
@@ -69,4 +69,4 @@ jobs:
             fi
       - deploy:
           name: Docker Image Deploment
-          command: .reaction/deploy-thalhalla.sh
+          command: .thalhalla/deploy-thalhalla.sh
