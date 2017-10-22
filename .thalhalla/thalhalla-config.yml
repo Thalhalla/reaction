@@ -8,6 +8,8 @@ variables:
 before_script:
   - docker info
   - docker login -u "$CI_REGISTRY_USER" -p "$CI_BUILD_TOKEN" "$CI_REGISTRY"
+  - git submodule sync --recursive
+  - git submodule update --init --recursive
 
 testing:
   stage: deploy
