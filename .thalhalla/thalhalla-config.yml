@@ -6,7 +6,7 @@ variables:
 
 before_script:
   - docker info
-  - echo $BUILD_TOKEN | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  - echo  "docker login -u '$CI_REGISTRY_USER' -p '${BUILD_TOKEN}' '$CI_REGISTRY'" |bash
 
 testing:
   stage: deploy
