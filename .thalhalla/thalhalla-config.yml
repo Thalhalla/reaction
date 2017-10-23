@@ -1,6 +1,5 @@
 image: docker:17-git
 
-
 variables:
   DOCKER_DRIVER: overlay2
   GIT_SUBMODULE_STRATEGY: none
