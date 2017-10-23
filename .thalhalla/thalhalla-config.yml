@@ -1,4 +1,4 @@
-image: docker:17-git
+image: joshuacox/reactiondev:latest
 
 variables:
   DOCKER_DRIVER: overlay2
