@@ -1,4 +1,4 @@
-image: joshuacox/reactiondev:latest
+image: joshuacox/reactiondev:docker
 
 variables:
   DOCKER_DRIVER: overlay2
