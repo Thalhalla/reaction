@@ -1,8 +1,11 @@
-image: joshuacox/reactiondev:docker
+image: docker:17-dind
 
 variables:
   DOCKER_DRIVER: overlay2
   GIT_SUBMODULE_STRATEGY: none
+
+services:
+  - docker:dind
 
 before_script:
   - docker info
