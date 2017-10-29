@@ -49,13 +49,8 @@ jobs:
             - /home/reaction/.meteor/local
 
       - run:
-          command: .thalhalla/build-thalhalla.sh
-          no_output_timeout: 30m
-
-      - run:
           command: .reaction/jsdoc/build.sh
           no_output_timeout: 2m
-
 
 #Thalhalla
       - deploy:
@@ -63,7 +58,7 @@ jobs:
           command: |
             if [ "${CIRCLE_BRANCH}" == "thalhalla" ]; then
               echo "Building Thalhalla"
-              bash .circleci/build-thalhalla.sh
+              bash .thalhalla/build-thalhalla.sh
             else
               echo "Not thalhalla branch so not deploying"
             fi
