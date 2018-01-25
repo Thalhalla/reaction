@@ -6,8 +6,8 @@ import { SimpleSchema } from "meteor/aldeed:simple-schema";
 import { Reaction } from "/client/api";
 
 /**
- * @file Internationalization
- * Client-side methods and template helpers for i18n, translations, right-to-left (RTL) and currency exchange support
+ * @file **Internationalization**
+ * Methods and template helpers for i18n, translations, right-to-left (RTL) and currency exchange support
  * @namespace i18n
  */
 
@@ -61,12 +61,11 @@ export function getLabelsFor(schema, name) {
  * @name getMessagesFor
  * @method
  * @memberof i18n
- * @summary Get i18n messages for autoform messages
- * currently using a globalMessage namespace only*
- * (1) Use schema-specific message for specific key
- * (2) Use schema-specific message for generic key
- * (3) Use schema-specific message for type
- * @todo implement messaging hierarchy from simple-schema
+ * @summary Get i18n messages for autoform messages. Currently using a globalMessage namespace only.
+ * 1. Use schema-specific message for specific key
+ * 2. Use schema-specific message for generic key
+ * 3. Use schema-specific message for type
+ * @todo Implement messaging hierarchy from simple-schema
  * @return {Object} returns i18n translated message for schema labels
  */
 export function getMessagesFor() {
@@ -103,7 +102,7 @@ Meteor.startup(() => {
     // setting local and active packageNamespaces
     // packageNamespaces are used to determine i18n namespace
     if (Reaction.Subscriptions.PrimaryShop.ready() && merchantShopsReadyOrSkipped) {
-      // use i18n detected language to getLocale info and set it clie nt side
+      // use i18n detected language to getLocale info and set it client side
       Meteor.call("shop/getLocale", (error, result) => {
         if (result) {
           const locale = result;

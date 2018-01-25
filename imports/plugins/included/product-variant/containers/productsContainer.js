@@ -8,7 +8,7 @@ import { Reaction } from "/client/api";
 import { ITEMS_INCREMENT } from "/client/config/defaults";
 import { ReactionProduct } from "/lib/api";
 import { applyProductRevision } from "/lib/api/products";
-import { Products, Tags } from "/lib/collections";
+import { Products, Tags, Shops } from "/lib/collections";
 import ProductsComponent from "../components/products";
 
 /**
@@ -46,7 +46,6 @@ const wrapComponent = (Comp) => (
   class ProductsContainer extends Component {
     static propTypes = {
       canLoadMoreProducts: PropTypes.bool,
-      products: PropTypes.array,
       productsSubscription: PropTypes.object,
       showNotFound: PropTypes.bool
     };
@@ -95,12 +94,10 @@ const wrapComponent = (Comp) => (
     render() {
       return (
         <Comp
+          {...this.props}
           ready={this.ready}
-          products={this.props.products}
-          productsSubscription={this.props.productsSubscription}
           loadMoreProducts={this.loadMoreProducts}
           loadProducts={this.loadProducts}
-          showNotFound={this.props.showNotFound}
         />
       );
     }
@@ -166,9 +163,17 @@ function composer(props, onData) {
     window.prerenderReady = true;
   }
 
+  const activeShopsIds = Shops.find({
+    $or: [
+      { "workflow.status": "active" },
+      { _id: Reaction.getPrimaryShopId() }
+    ]
+  }).fetch().map(activeShop => activeShop._id);
+
   const productCursor = Products.find({
     ancestors: [],
-    type: { $in: ["simple"] }
+    type: { $in: ["simple"] },
+    shopId: { $in: activeShopsIds }
   });
 
   const products = productCursor.map((product) => {
@@ -176,7 +181,6 @@ function composer(props, onData) {
   });
 
   const sortedProducts = ReactionProduct.sortProducts(products, currentTag);
-
 
   canLoadMoreProducts = productCursor.count() >= Session.get("productScrollLimit");
   const stateProducts = sortedProducts;

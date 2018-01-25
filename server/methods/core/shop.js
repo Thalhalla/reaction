@@ -11,11 +11,16 @@ import * as Collections from "/lib/collections";
 import * as Schemas from "/lib/collections/schemas";
 
 /**
- * Reaction Shop Methods
- */
+ * @file Meteor methods for Shop
+ *
+ *
+ * @namespace Methods/Shop
+*/
 Meteor.methods({
   /**
-   * shop/createShop
+   * @name shop/createShop
+   * @method
+   * @memberof Methods/Shop
    * @param {String} shopAdminUserId - optionally create shop for provided userId
    * @param {Object} shopData - optionally provide shop object to customize
    * @return {String} return shopId
@@ -56,7 +61,7 @@ Meteor.methods({
     const currentUser = Meteor.user();
     const currentAccount = Collections.Accounts.findOne({ _id: currentUser._id });
     if (!currentUser) {
-      throw new Meteor.Error("Unable to create shop without a user");
+      throw new Meteor.Error("server-error", "Unable to create shop without a user");
     }
 
     let shopUser = currentUser;
@@ -104,6 +109,9 @@ Meteor.methods({
     // TODO audience permissions need to be consolidated into [object] and not [string]
     // permissions with [string] on layout ie. orders and checkout, cause the insert to fail
     delete shop.layout;
+    // delete brandAssets object from shop to prevent new shops from carrying over existing shop's
+    // brand image
+    delete shop.brandAssets;
 
     let newShopId;
 
@@ -120,7 +128,7 @@ Meteor.methods({
 
     // update user
     Reaction.insertPackagesForShop(shop._id);
-    Reaction.createDefaultGroups({ shopId: shop._id });
+    Reaction.createGroups({ shopId: shop._id });
     const ownerGroup = Collections.Groups.findOne({ slug: "owner", shopId: shop._id });
     Roles.addUsersToRoles([currentUser, shopUser._id], ownerGroup.permissions, shop._id);
     Collections.Accounts.update({ _id: shopUser._id }, {
@@ -148,7 +156,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/getLocale
+   * @name shop/getLocale
+   * @method
+   * @memberof Methods/Shop
    * @summary determine user's countryCode and return locale object
    * determine local currency and conversion rate from shop currency
    * @return {Object} returns user location and locale
@@ -178,7 +188,7 @@ Meteor.methods({
     });
 
     if (!shop) {
-      throw new Meteor.Error("Failed to find shop data. Unable to determine locale.");
+      throw new Meteor.Error("not-found", "Failed to find shop data. Unable to determine locale.");
     }
     // configure default defaultCountryCode
     // fallback to shop settings
@@ -217,12 +227,17 @@ Meteor.methods({
         // only fetch rates if locale and shop currency are not equal
         // if shop.currency = locale currency the rate is 1
         if (shop.currency !== currency) {
-          exchangeRate = Meteor.call("shop/getCurrencyRates", currency);
+          const settings = Reaction.getShopSettings();
+          const exchangeConfig = settings.openexchangerates || {};
 
-          if (typeof exchangeRate === "number") {
-            result.currency.exchangeRate = exchangeRate;
-          } else {
-            Logger.warn("Failed to get currency exchange rates.");
+          if (exchangeConfig.appId) {
+            exchangeRate = Meteor.call("shop/getCurrencyRates", currency);
+
+            if (typeof exchangeRate === "number") {
+              result.currency.exchangeRate = exchangeRate;
+            } else {
+              Logger.warn("Failed to get currency exchange rates.");
+            }
           }
         }
       }
@@ -252,7 +267,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/getCurrencyRates
+   * @name shop/getCurrencyRates
+   * @method
+   * @memberof Methods/Shop
    * @summary It returns the current exchange rate against the shop currency
    * usage: Meteor.call("shop/getCurrencyRates","USD")
    * @param {String} currency code
@@ -274,7 +291,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/fetchCurrencyRate
+   * @name shop/fetchCurrencyRate
+   * @method
+   * @memberof Methods/Shop
    * @summary fetch the latest currency rates from
    * https://openexchangerates.org
    * usage: Meteor.call("shop/fetchCurrencyRate")
@@ -310,11 +329,11 @@ Meteor.methods({
     // with current rates from Open Exchange Rates
     // warn if we don't have app_id
     if (!shopSettings.settings.openexchangerates) {
-      throw new Meteor.Error("notConfigured",
+      throw new Meteor.Error("not-configured",
         "Open Exchange Rates not configured. Configure for current rates.");
     } else {
       if (!shopSettings.settings.openexchangerates.appId) {
-        throw new Meteor.Error("notConfigured",
+        throw new Meteor.Error("not-configured",
           "Open Exchange Rates AppId not configured. Configure for current rates.");
       } else {
         // shop open exchange rates appId
@@ -334,10 +353,10 @@ Meteor.methods({
         } catch (error) {
           if (error.error) {
             Logger.error(error.message);
-            throw new Meteor.Error(error.message);
+            throw new Meteor.Error("server-error", error.message);
           } else {
             // https://openexchangerates.org/documentation#errors
-            throw new Meteor.Error(error.response.data.description);
+            throw new Meteor.Error("server-error", error.response.data.description);
           }
         }
 
@@ -361,7 +380,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/flushCurrencyRate
+   * @name shop/flushCurrencyRate
+   * @method
+   * @memberof Methods/Shop
    * @description Method calls by cron job
    * @summary It removes exchange rates that are too old
    * usage: Meteor.call("shop/flushCurrencyRate")
@@ -389,7 +410,7 @@ Meteor.methods({
 
     // if updatedAt is not a Date(), then there is no rates yet
     if (typeof updatedAt !== "object") {
-      throw new Meteor.Error("notExists",
+      throw new Meteor.Error("error-occurred",
         "[flushCurrencyRates worker]: There is nothing to flush.");
     }
 
@@ -412,7 +433,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/updateShopExternalServices
+   * @name shop/updateShopExternalServices
+   * @method
+   * @memberof Methods/Shop
    * @description On submit OpenExchangeRatesForm handler
    * @summary we need to rerun fetch exchange rates job on every form submit,
    * that's why we update autoform type to "method-update"
@@ -429,7 +452,7 @@ Meteor.methods({
 
     // must have core permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     this.unblock();
 
@@ -458,7 +481,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/locateAddress
+   * @name shop/locateAddress
+   * @method
+   * @memberof Methods/Shop
    * @summary determine user's full location for autopopulating addresses
    * @param {Number} latitude - latitude
    * @param {Number} longitude - longitude
@@ -488,7 +513,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/createTag
+   * @name shop/createTag
+   * @method
+   * @memberof Methods/Shop
    * @summary creates new tag
    * @param {String} tagName - new tag name
    * @param {Boolean} isTopLevel - if true -- new tag will be created on top of
@@ -503,7 +530,7 @@ Meteor.methods({
 
     // must have 'core' permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
 
     const tag = {
@@ -518,7 +545,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/updateHeaderTags
+   * @name shop/updateHeaderTags
+   * @method
+   * @memberof Methods/Shop
    * @summary method to insert or update tag with hierarchy
    * @param {String} tagName will insert, tagName + tagId will update existing
    * @param {String} tagId - tagId to update
@@ -533,7 +562,7 @@ Meteor.methods({
     let newTagId = {};
     // must have 'core' permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     this.unblock();
 
@@ -547,64 +576,64 @@ Meteor.methods({
       name: tagName
     });
 
+    let result;
+
     if (tagId) {
-      return Collections.Tags.update(tagId, {
-        $set: newTag
-      }, function () {
-        Logger.debug(
-          `Changed name of tag ${tagId} to ${tagName}`);
-        return true;
-      });
-    } else if (existingTag) {
+      result = Collections.Tags.update(tagId, { $set: newTag });
+      Logger.debug(`Changed name of tag ${tagId} to ${tagName}`);
+      return result;
+    }
+
+    if (existingTag) {
       // if is currentTag
       if (currentTagId) {
-        return Collections.Tags.update(currentTagId, {
+        result = Collections.Tags.update(currentTagId, {
           $addToSet: {
             relatedTagIds: existingTag._id
           }
-        }, function () {
-          Logger.debug(
-            `Added tag ${existingTag.name} to the related tags list for tag ${currentTagId}`
-          );
-          return true;
         });
+        Logger.debug(
+          `Added tag ${existingTag.name} to the related tags list for tag ${currentTagId}`
+        );
+        return result;
       }
+
       // update existing tag
-      return Collections.Tags.update(existingTag._id, {
+      result = Collections.Tags.update(existingTag._id, {
         $set: {
           isTopLevel: true
         }
-      }, function () {
-        Logger.debug(`Marked tag ${existingTag.name} as a top level tag`);
-        return true;
       });
+      Logger.debug(`Marked tag ${existingTag.name} as a top level tag`);
+      return result;
     }
+
     // create newTags
     newTagId = Meteor.call("shop/createTag", tagName, !currentTagId);
 
     // if result is an Error object, we return it immediately
-    if (typeof newTagId !== "string") {
-      return newTagId;
-    }
+    if (typeof newTagId !== "string") return newTagId;
 
     if (currentTagId) {
-      return Collections.Tags.update(currentTagId, {
+      result = Collections.Tags.update(currentTagId, {
         $addToSet: {
           relatedTagIds: newTagId
         }
-      }, function () {
-        Logger.debug(`Added tag${newTag.name} to the related tags list for tag ${currentTagId}`);
-        return true;
       });
-      // TODO: refactor this. unnecessary check
-    } else if (typeof newTagId === "string" && !currentTagId) {
-      return true;
+      Logger.debug(`Added tag${newTag.name} to the related tags list for tag ${currentTagId}`);
+      return result;
     }
-    throw new Meteor.Error(403, "Failed to update header tags.");
+
+    // TODO: refactor this. unnecessary check
+    if (typeof newTagId === "string" && !currentTagId) return true;
+
+    throw new Meteor.Error("access-denied", "Failed to update header tags.");
   },
 
   /**
-   * shop/removeHeaderTag
+   * @name shop/removeHeaderTag
+   * @method
+   * @memberof Methods/Shop
    * @param {String} tagId - method to remove tag navigation tags
    * @param {String} currentTagId - currentTagId
    * @return {String} returns remove result
@@ -614,7 +643,7 @@ Meteor.methods({
     check(currentTagId, String);
     // must have core permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     this.unblock();
     // remove from related tag use
@@ -640,11 +669,13 @@ Meteor.methods({
       return Collections.Tags.remove(tagId);
     }
     // unable to delete anything
-    throw new Meteor.Error(403, "Unable to delete tags that are in use.");
+    throw new Meteor.Error("access-denied", "Unable to delete tags that are in use.");
   },
 
   /**
-   * shop/hideHeaderTag
+   * @name shop/hideHeaderTag
+   * @method
+   * @memberof Methods/Shop
    * @param {String} tagId - method to remove tag navigation tags
    * @return {String} returns remove result
    */
@@ -652,7 +683,7 @@ Meteor.methods({
     check(tagId, String);
     // must have core permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     this.unblock();
     // hide it
@@ -666,7 +697,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/getWorkflow
+   * @name shop/getWorkflow
+   * @method
+   * @memberof Methods/Shop
    * @summary gets the current shop workflows
    * @param {String} name - workflow name
    * @return {Array} returns workflow array
@@ -687,8 +720,11 @@ Meteor.methods({
     });
     return shopWorkflows;
   },
+
   /**
-   * shop/updateLanguageConfiguration
+   * @name shop/updateLanguageConfiguration
+   * @method
+   * @memberof Methods/Shop
    * @summary enable / disable a language
    * @param {String} language - language name | "all" to bulk enable / disable
    * @param {Boolean} enabled - true / false
@@ -700,7 +736,7 @@ Meteor.methods({
 
     // must have core permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     this.unblock();
 
@@ -749,7 +785,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/updateCurrencyConfiguration
+   * @name shop/updateCurrencyConfiguration
+   * @method
+   * @memberof Methods/Shop
    * @summary enable / disable a currency
    * @param {String} currency - currency name | "all" to bulk enable / disable
    * @param {Boolean} enabled - true / false
@@ -760,7 +798,7 @@ Meteor.methods({
     check(enabled, Boolean);
     // must have core permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     this.unblock();
 
@@ -807,7 +845,9 @@ Meteor.methods({
   },
 
   /**
-   * shop/updateBrandAsset
+   * @name shop/updateBrandAsset
+   * @method
+   * @memberof Methods/Shop
    * @param {Object} asset - brand asset {mediaId: "", type, ""}
    * @return {Int} returns update result
    */
@@ -818,7 +858,7 @@ Meteor.methods({
     });
     // must have core permissions
     if (!Reaction.hasPermission("core")) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
     this.unblock();
 
@@ -856,8 +896,10 @@ Meteor.methods({
     });
   },
 
-  /*
-   * shop/togglePackage
+  /**
+   * @name shop/togglePackage
+   * @method
+   * @memberof Methods/Shop
    * @summary enable/disable Reaction package
    * @param {String} packageId - package _id
    * @param {Boolean} enabled - current package `enabled` state
@@ -867,7 +909,7 @@ Meteor.methods({
     check(packageId, String);
     check(enabled, Boolean);
     if (!Reaction.hasAdminAccess()) {
-      throw new Meteor.Error(403, "Access Denied");
+      throw new Meteor.Error("access-denied", "Access Denied");
     }
 
     return Collections.Packages.update(packageId, {
@@ -876,12 +918,15 @@ Meteor.methods({
       }
     });
   },
-  /*
-  * shop/changeLayout
-  * @summary Change the layout for all workflows so you can use a custom one
-  * @param {String} shopId - the shop's ID
-  * @param {String} layout - new layout to use
-  * @return {Number} mongo update result
+
+  /**
+   * @name shop/changeLayout
+   * @method
+   * @memberof Methods/Shop
+   * @summary Change the layout for all workflows so you can use a custom one
+   * @param {String} shopId - the shop's ID
+   * @param {String} newLayout - new layout to use
+   * @return {Number} mongo update result
    */
   "shop/changeLayouts": function (shopId, newLayout) {
     check(shopId, String);

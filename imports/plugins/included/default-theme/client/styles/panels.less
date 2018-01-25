@@ -33,6 +33,11 @@
   border: @border-thin;
 }
 
+.panel-title {
+  color: @rui-default-text;
+  letter-spacing: .03rem;
+}
+
 label.panel-title {
   font-weight: normal;
 }
@@ -98,6 +103,10 @@ label.panel-title {
 .panel-default > .panel-heading {
   padding: 15px 20px;
   background-color: @white;
+
+  .badge-danger {
+    background: @brand-danger;
+  }
 }
 
 .panel-md > .panel-heading {

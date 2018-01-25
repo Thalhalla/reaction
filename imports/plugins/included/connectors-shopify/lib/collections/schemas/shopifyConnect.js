@@ -2,6 +2,22 @@ import { SimpleSchema } from "meteor/aldeed:simple-schema";
 import { PackageConfig } from "/lib/collections/schemas/registry";
 import { registerSchema } from "/imports/plugins/core/collections";
 
+/**
+ * @file ShopifyProduct
+ *
+ * @module connectors-shopify
+ */
+
+/**
+ * @name Webhook
+ * @type {SimpleSchema}
+ * @property {Number} shopifyId Shopify webhook ID
+ * @property {String} topic Shopify webhook topic
+ * @property {String} address URL webhook will POST to
+ * @property {String} format Format of webhook data
+ * @property {Array} integrations Array of integration strings using this webhook
+ * @property {String} description Shopify webhook description, currently unused
+ */
 const Webhook = new SimpleSchema({
   shopifyId: {
     type: Number,
@@ -35,6 +51,40 @@ const Webhook = new SimpleSchema({
 
 registerSchema("Webhook", Webhook);
 
+/**
+ * @name Synchook
+ * @type {SimpleSchema}
+ * @property {String} topic - General topic this event is under
+ * @property {String} event - The type of event that we are capturing
+ * @property {String} syncType - The handler to run for this event
+ */
+export const Synchook = new SimpleSchema({
+  topic: {
+    type: String,
+    label: "Outbound Sync Topic",
+    allowedValues: ["orders"] // expand as necessary
+  },
+  event: {
+    type: String,
+    label: "Event to act upon"
+  },
+  syncType: {
+    type: String,
+    label: "Exactly what to sync in this topic"
+  }
+});
+
+registerSchema("Synchook", Synchook);
+
+/**
+ * @name ShopifyConnectPackageConfig
+ * @type {SimpleSchema}
+ * @property {String} settings.apiKey Shopify API key
+ * @property {String} settings.password Shopify API password
+ * @property {String} settings.sharedSecret Shopify API shared secret
+ * @property {String} settings.shopName Shop slug
+ * @property {Array} settings.webhooks Array of registered Shopify webhooks
+ */
 export const ShopifyConnectPackageConfig = new SimpleSchema([
   PackageConfig, {
     "settings.apiKey": {
@@ -60,6 +110,11 @@ export const ShopifyConnectPackageConfig = new SimpleSchema([
     "settings.webhooks": {
       type: [Webhook],
       label: "Registered Shopify webhooks",
+      optional: true
+    },
+    "settings.synchooks": {
+      type: [Synchook],
+      label: "Hooks being used to sync outbound with Shopify",
       optional: true
     }
   }

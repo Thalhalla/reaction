@@ -7,13 +7,15 @@ import { Logger, Reaction } from "/server/api";
 
 
 /**
- * cart/copyCartToOrder
- * @summary transform cart to order when a payment is processed we want to
- * copy the cart over to an order object, and give the user a new empty
- * cart. reusing the cart schema makes sense, but integrity of the order, we
- * don't want to just make another cart item
- * @todo:  Partial order processing, shopId processing
- * @todo:  Review Security on this method
+ * @name cart/copyCartToOrder
+ * @method
+ * @memberof Methods/Cart
+ * @summary Transform Cart to Order when a payment is processed.
+ * We want to copy the cart over to an order object, and give the user a new empty
+ * cart. Reusing the cart schema makes sense, but integrity of the order,
+ * we don't want to just make another cart item
+ * @todo  Partial order processing, shopId processing
+ * @todo  Review Security on this method
  * @param {String} cartId - cartId to transform to order
  * @return {String} returns orderId
  */
@@ -23,7 +25,7 @@ export function copyCartToOrder(cartId) {
 
   // security check - method can only be called on own cart
   if (cart.userId !== Meteor.userId()) {
-    throw new Meteor.Error(403, "Access Denied");
+    throw new Meteor.Error("access-denied", "Access Denied");
   }
 
   // Init new order object from existing cart
@@ -36,7 +38,7 @@ export function copyCartToOrder(cartId) {
   if (!order.items || order.items.length === 0) {
     const msg = "An error occurred saving the order. Missing cart items.";
     Logger.error(msg);
-    throw new Meteor.Error("no-cart-items", msg);
+    throw new Meteor.Error("error-occurred", msg);
   }
 
   // Debug only message to identify the current cartId
@@ -213,7 +215,7 @@ export function copyCartToOrder(cartId) {
     return orderId;
   }
   // we should not have made it here, throw error
-  throw new Meteor.Error(400, "cart/copyCartToOrder: Invalid request");
+  throw new Meteor.Error("bad-request", "cart/copyCartToOrder: Invalid request");
 }
 
 Meteor.methods({

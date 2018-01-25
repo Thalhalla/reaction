@@ -4,33 +4,11 @@ import { Meteor } from "meteor/meteor";
 import { Accounts } from "meteor/accounts-base";
 import { Roles } from "meteor/alanning:roles";
 import { Session } from "meteor/session";
-import { Gravatar } from "meteor/jparker:gravatar";
 import { Reaction, Logger } from "/client/api";
 import { i18nextDep, i18next } from  "/client/api";
-import * as Collections from "/lib/collections";
 import { Tags } from "/lib/collections";
 import MainDropdown from "../components/mainDropdown";
-
-function getUserGravatar(currentUser, size) {
-  const options = {
-    secure: true,
-    size: size,
-    default: "identicon"
-  };
-  const user = currentUser || Accounts.user();
-  if (!user) {
-    return false;
-  }
-  const account = Collections.Accounts.findOne(user._id);
-  // first we check picture exists. Picture has higher priority to display
-  if (account && account.profile && account.profile.picture) {
-    return account.profile.picture;
-  }
-  if (user.emails && user.emails.length === 1) {
-    const email = user.emails[0].address;
-    return Gravatar.imageUrl(email, options);
-  }
-}
+import { getUserAvatar } from "/imports/plugins/core/accounts/client/helpers/helpers";
 
 function displayName(displayUser) {
   i18nextDep.depend();
@@ -74,6 +52,12 @@ function handleChange(event, value) {
       if (error) {
         Logger.error(error, "Failed to logout.");
       }
+
+      // Resets the app to show the primary shop as the active shop when a user logs out.
+      // When an admin user is switching back and forth between shops, the app will keep the
+      // activeShopId as the last shop visited. If an admin user logs out, the app will stay on that shop
+      // for any new user who uses the same browser, temporarily, until the app is refreshed. This fixes that issue.
+      Reaction.setShopId(Reaction.getPrimaryShopId());
     });
   }
 
@@ -84,7 +68,7 @@ function handleChange(event, value) {
       let currentTagId;
 
       if (error) {
-        throw new Meteor.Error("createProduct error", error);
+        throw new Meteor.Error("create-product-error", error);
       } else if (productId) {
         currentTagId = Session.get("currentTag");
         currentTag = Tags.findOne(currentTagId);
@@ -106,7 +90,7 @@ function handleChange(event, value) {
 }
 
 const composer = ({ currentAccount }, onData) => {
-  const userImage = getUserGravatar(currentAccount, 40);
+  const userImage = getUserAvatar(currentAccount);
   const userName = displayName(currentAccount);
   const adminShortcuts = getAdminShortcutIcons();
 

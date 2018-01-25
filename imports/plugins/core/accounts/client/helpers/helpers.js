@@ -1,19 +1,40 @@
+import React from "react";
 import { Template } from "meteor/templating";
-import { Gravatar } from "meteor/jparker:gravatar";
+import { Accounts } from "meteor/accounts-base";
 import * as Collections from "/lib/collections";
+import { Components } from "@reactioncommerce/reaction-components";
 
 export const LoginFormSharedHelpers = {
+  /**
+   * @method messages
+   * @memberof Accounts
+   * @return {Object} Message object
+   */
   messages: function () {
     return Template.instance().formMessages.get();
   },
 
+  /**
+   * @method hasError
+   * @memberof Accounts
+   * @summary Check to see if there are error or other messages to display
+   * @param  {Object}  error Error
+   * @return {String}       "has-error has-feedback" string
+   */
   hasError(error) {
     // True here means the field is valid
-    // We're checking if theres some other message to display
     if (error !== true && typeof error !== "undefined") {
       return "has-error has-feedback";
     }
   },
+
+  /**
+   * @method capitalize
+   * @memberof Accounts
+   * @summary Client-side helper to capitalize word
+   * @param  {String} str String to capitalize
+   * @return {String}     First letter of first word capitalized
+   */
   capitalize: function (str) {
     const finalString = str === null ? "" : String(str);
     return finalString.charAt(0).toUpperCase() + finalString.slice(1);
@@ -21,19 +42,46 @@ export const LoginFormSharedHelpers = {
 
 };
 
-export function getGravatar(user) {
-  const options = {
-    secure: true,
-    size: 30,
-    default: "identicon"
-  };
-  if (!user) { return false; }
+/**
+ * @method getUserAvatar
+ * @memberof Accounts
+ * @summary ReactionAvatar Component helper to get a user's Avatar
+ * @example const userAvatar = getUserAvatar(account);
+ * @param  {Object} currentUser User
+ * @return {Component}          ReactionAvatar component
+ */
+export function getUserAvatar(currentUser) {
+  const user = currentUser || Accounts.user();
+
   const account = Collections.Accounts.findOne(user._id);
+  // first we check picture exists. Picture has higher priority to display
   if (account && account.profile && account.profile.picture) {
-    return account.profile.picture;
+    const picture = account.profile.picture;
+
+    return (
+      <Components.ReactionAvatar
+        className={"accounts-avatar"}
+        size={30}
+        src={picture}
+      />
+    );
   }
-  if (user.emails && user.emails.length > 0) {
+  if (user.emails && user.emails.length === 1) {
     const email = user.emails[0].address;
-    return Gravatar.imageUrl(email, options);
+
+    return (
+      <Components.ReactionAvatar
+        className={"accounts-avatar"}
+        email={email}
+        size={30}
+      />
+    );
   }
+
+  return (
+    <Components.ReactionAvatar
+      className={"accounts-avatar"}
+      size={30}
+    />
+  );
 }

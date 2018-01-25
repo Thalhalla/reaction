@@ -24,19 +24,20 @@ class MainDropdown extends Component {
       [PropTypes.bool, PropTypes.object]
     ),
     handleChange: PropTypes.func,
-    userImage: PropTypes.oneOfType(
-      [PropTypes.bool, PropTypes.string]
-    ),
+    userImage: PropTypes.object,
     userName: PropTypes.string,
     userShortcuts: PropTypes.object
   }
 
   buttonElement() {
+    const { userImage, userName } = this.props;
     return (
       <Components.Button containerStyle={{ color: "#000", fontWeight: "normal", letterSpacing: 0.8 }}>
-        <img className="accounts-img-tag" src={this.props.userImage} />&nbsp;
-        <span>{this.props.userName}</span>&nbsp;
-        <i className="fa fa-caret-down" />
+        <span className="main-dropdown-userImage">{userImage}</span>
+        <span className="main-dropdown-userName">{userName}</span>&nbsp;
+        <Components.Icon
+          icon={"fa fa-caret-down"}
+        />
       </Components.Button>
     );
   }
@@ -87,7 +88,10 @@ class MainDropdown extends Component {
     return (
       <div className="accounts-dropdown">
         <div className="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000">
-          <span><Components.Translation defaultValue="Sign In" i18nKey="accountsUI.signIn" /></span><b className="caret" />
+          <span>
+            <Components.Icon icon="fa fa-user" />
+          </span>
+          <b className="caret" />
         </div>
         <div
           className="accounts-dialog accounts-layout dropdown-menu pull-right"
@@ -111,6 +115,10 @@ class MainDropdown extends Component {
               menuStyle={menuStyle}
               className="accounts-li-tag"
               onChange={this.props.handleChange}
+              constraints={[{
+                to: "window",
+                attachment: "together"
+              }]}
             >
               {this.renderUserIcons()}
               {this.renderAdminIcons()}

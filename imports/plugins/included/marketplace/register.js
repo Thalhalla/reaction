@@ -75,6 +75,7 @@ Reaction.registerPackage({
     icon: "fa fa-globe",
     provides: ["settings"],
     container: "dashboard",
+    showForShopTypes: ["primary"],
     meta: {
       actionView: {
         dashboardSize: "lg"
@@ -84,18 +85,6 @@ Reaction.registerPackage({
       label: "Marketplace Shops",
       permission: "marketplaceShops"
     }]
-  }, {
-    // does this work?
-    // override default shop settings
-    route: "shop/settings",
-    template: "sellerShopSettings",
-    name: "sellerShopSettings",
-    label: "Shop Settings",
-    icon: "fa fa-th",
-    provides: ["shortcut"],
-    container: "dashboard",
-    audience: ["seller"],
-    priority: 1
   }, {
     // This provides the settings container for marketplaceMerchantSettings
     label: "My Shop Settings",

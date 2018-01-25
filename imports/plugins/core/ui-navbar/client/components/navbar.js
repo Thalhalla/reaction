@@ -24,8 +24,23 @@ class NavBar extends Component {
     brandMedia: PropTypes.object,
     hasProperPermission: PropTypes.bool,
     searchEnabled: PropTypes.bool,
-    shop: PropTypes.object
-  }
+    shop: PropTypes.object,
+    visibility: PropTypes.object.isRequired
+  };
+
+  static defaultProps = {
+    visibility: {
+      hamburger: true,
+      brand: true,
+      tags: true,
+      search: true,
+      notifications: true,
+      languages: true,
+      currency: true,
+      mainDropdown: true,
+      cartContainer: true
+    }
+  };
 
   state = {
     navBarVisible: false
@@ -46,7 +61,7 @@ class NavBar extends Component {
 
   renderLanguage() {
     return (
-      <div className="languages hidden-xs">
+      <div className="languages">
         <Components.LanguageDropdown />
       </div>
     );
@@ -54,7 +69,7 @@ class NavBar extends Component {
 
   renderCurrency() {
     return (
-      <div className="currencies hidden-xs">
+      <div className="currencies">
         <Components.CurrencyDropdown />
       </div>
     );
@@ -89,7 +104,9 @@ class NavBar extends Component {
   renderNotificationIcon() {
     if (this.props.hasProperPermission) {
       return (
-        <Components.Notification />
+        <div className="navbar-notification">
+          <Components.Notification />
+        </div>
       );
     }
   }
@@ -125,8 +142,12 @@ class NavBar extends Component {
         <Components.TagNav
           isVisible={this.state.navBarVisible}
           closeNavbar={this.handleCloseNavbar}
+          {...this.props}
         >
           <Components.Brand />
+          {this.renderNotificationIcon()}
+          {this.renderLanguage()}
+          {this.renderCurrency()}
         </Components.TagNav>
       </div>
     );
@@ -135,15 +156,15 @@ class NavBar extends Component {
   render() {
     return (
       <div className="rui navbar">
-        {this.renderHamburgerButton()}
-        {this.renderBrand()}
-        {this.renderTagNav()}
-        {this.renderSearchButton()}
-        {this.renderNotificationIcon()}
-        {this.renderLanguage()}
-        {this.renderCurrency()}
-        {this.renderMainDropdown()}
-        {this.renderCartContainerAndPanel()}
+        {this.props.visibility.hamburger && this.renderHamburgerButton()}
+        {this.props.visibility.brand && this.renderBrand()}
+        {this.props.visibility.tags && this.renderTagNav()}
+        {this.props.visibility.search && this.renderSearchButton()}
+        {this.props.visibility.notifications && this.renderNotificationIcon()}
+        {this.props.visibility.languages && this.renderLanguage()}
+        {this.props.visibility.currency && this.renderCurrency()}
+        {this.props.visibility.mainDropdown && this.renderMainDropdown()}
+        {this.props.visibility.cartContainer && this.renderCartContainerAndPanel()}
       </div>
     );
   }

@@ -4,8 +4,17 @@ import { check } from "meteor/check";
 import { Accounts } from "meteor/accounts-base";
 import { Reaction, Logger } from "/server/api";
 
+/**
+ * @name accounts/sendResetPasswordEmail
+ * @memberof Methods/Accounts
+ * @method
+ * @example Meteor.call("accounts/sendResetPasswordEmail", options)
+ * @summary Send reset password email
+ * @param {Object} options
+ * @param {String} options.email - email of user
+ * @returns {false}
+ */
 Meteor.methods({
-
   "accounts/sendResetPasswordEmail"(options) {
     check(options, {
       email: String
@@ -15,7 +24,7 @@ Meteor.methods({
 
     if (!user) {
       Logger.error("accounts/sendResetPasswordEmail - User not found");
-      throw new Meteor.Error("user-not-found", "User not found");
+      throw new Meteor.Error("not-found", "User not found");
     }
 
     const emails = _.map(user.emails || [], "address");
